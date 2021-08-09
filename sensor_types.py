@@ -22,9 +22,9 @@ class ReSkinData:
         
         Parameters
         ----------
-        time: int, optional
+        time: float, optional
             timestamp
-        acquisition_delay: int, optional
+        acquisition_delay: float, optional
             delay in acquiring data
         data: list
             data from sensor
@@ -36,3 +36,8 @@ class ReSkinData:
         self.acquisition_delay = acquisition_delay
         self.data = data
         self.device_id = device_id
+    
+    def __str__(self):
+        return 'Device ID: {}\n Time: {}\n Acquisition Delay: {}\n Data: {}'.format(
+            self.device_id, self.time, self.acquisition_delay, self.data
+        )

@@ -57,9 +57,10 @@ class ReSkinBase(serial.Serial):
         """
         self.flush()
         print("Initializing sensor")
-        test_data = self.get_data(1)
+        _, _, test_data = self.get_data(1)
         print('got 1 datapoint')
-        print(' '.join('{:.2f}'.format(x) for x in test_data[0].data))
+        # print(' '.join('{:.2f}'.format(x) for x in test_data))
+        print(test_data)
         return
 
     def get_data(self, num_samples=1):
@@ -96,7 +97,6 @@ class ReSkinBase(serial.Serial):
                     if zero_bytes[-2:] != b'\r\n':
                         zero_bytes = self.read_until(b'\r\n')
                         continue
-                    # print(zero_bytes[-2:] == b'\r\n')
                     decoded_zero_bytes = struct.unpack(
                         '@{}fcc'.format(self._msg_floats), zero_bytes)[:self._msg_floats]
                     
@@ -106,6 +106,8 @@ class ReSkinBase(serial.Serial):
                     decoded_zero_bytes = decoded_zero_bytes.strip()
                     decoded_zero_bytes = [float(x) for x in decoded_zero_bytes.split()]
                 
+                acq_delay = time.time() - collect_start
+                return collect_start, acq_delay, decoded_zero_bytes
                 new_data = ReSkinData(time=collect_start,
                     acquisition_delay=time.time() - collect_start,
                     device_id=self.device_id, data=decoded_zero_bytes)

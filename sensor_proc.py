@@ -3,6 +3,7 @@ import ctypes as ct
 from multiprocessing import Process, Event, Pipe, Value, Array
 
 from sensor import ReSkinBase, ReSkinSettings
+from sensor_types import ReSkinData
 
 class SensorProcess(Process):
     """
@@ -33,17 +34,15 @@ class SensorProcess(Process):
             Quantum of data piped from buffer at one time.
         """
         super(SensorProcess, self).__init__()
-        # self.sensor = ReSkinBase(
-        #     num_mags=sensor_settings.num_mags,
-        #     port=sensor_settings.port,
-        #     baudrate=sensor_settings.baudrate,
-        #     burst_mode=sensor_settings.burst_mode,
-        #     device_id=sensor_settings.device_id)
+        self.device_id = sensor_settings.device_id
 
         self._pipe_in, self._pipe_out = Pipe()
         self._sample_cnt = Value(ct.c_uint64)
         self._buffer_size = Value(ct.c_uint64)
-        self._last_value = Array(ct.c_float, sensor_settings.num_mags * 4)
+        
+        self._last_time = Value(ct.c_float)
+        self._last_delay = Value(ct.c_float)
+        self._last_reading = Array(ct.c_float, sensor_settings.num_mags * 4)
 
         self.sensor_settings = sensor_settings
 
@@ -57,20 +56,45 @@ class SensorProcess(Process):
         atexit.register(self.join)
         pass
 
-    # Create a property for the last reading
+    # Might need to make sure we aren't passing mutable object.
     @property
     def last_reading(self):
-        return self._last_value
+        return ReSkinData(
+            time = self._last_time.value,
+            acquisition_delay=self._last_delay.value,
+            data = self._last_reading[:],
+            device_id=self.device_id)
+        # return self._last_reading
     
+    @property
+    def sample_cnt(self):
+        return self._sample_cnt.value
+
     def start_streaming(self):
         self._event_is_streaming.set()
 
     def pause_streaming(self):
         self._event_is_streaming.clear()
 
+    def get_samples(self, num_samples=5):
+        """
+        Return a specified number of samples from the ReSkin Sensor
+        
+        Parameters
+        ----------
+        num_samples : int
+            Number of samples required
+        """
+
+        pass
     def get_buffer(self, timeout=1.0):
         """
         Return the recorded buffer
+        
+        Parameters
+        ----------
+        timeout : int
+            Time to wait for data to start getting piped.
         """
         rtn = []
         if self._event_sending_data.is_set() or self._buffer_size.value > 0:
@@ -95,7 +119,7 @@ class SensorProcess(Process):
         """
         buffer = []
         # Initialize sensor
-        print(self._last_value)
+        print(self._last_reading)
         self.sensor = ReSkinBase(
             num_mags=self.sensor_settings.num_mags,
             port=self.sensor_settings.port,
@@ -112,14 +136,12 @@ class SensorProcess(Process):
                     is_streaming = True
                     # Any logging or stuff you want to do when polling has
                     # just started should go here
-                d = self.sensor.get_data()
+                self._last_time.value, self._last_delay.value, \
+                    self._last_reading[:] = self.sensor.get_data()
 
-                self._last_value[:] = d[0].data
-                # print(d[0].data)
-                # print([self._last_value[i] for i in range(20)])
                 self._sample_cnt.value += 1
 
-                buffer.append(d)
+                buffer.append(self.last_reading)
                 self._buffer_size.value = len(buffer)
 
             else:
@@ -154,6 +176,6 @@ if __name__ == '__main__':
     time.sleep(2.0)
     test_proc.pause_streaming()
     print(len(test_proc.get_buffer()))
-    print(test_proc.last_reading[:])
+    print(test_proc.last_reading)
     while True:
         input('aaaa')
