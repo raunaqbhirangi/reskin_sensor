@@ -11,7 +11,7 @@ from sensor_types import ReSkinData
 
 ReSkinSettings = collections.namedtuple('ReSkinSettings',
     'num_mags port baudrate burst_mode device_id')
-    
+
 class ReSkinBase(serial.Serial):
     """
     Base class for a ReSkin sensor.
@@ -58,7 +58,9 @@ class ReSkinBase(serial.Serial):
         self.flush()
         print("Initializing sensor")
         test_data = self.get_data(1)
-        print(' '.join('{:.2f}'.format(x) for x in test_data[0]))
+        print('got 1 datapoint')
+        print(' '.join('{:.2f}'.format(x) for x in test_data[0].data))
+        return
 
     def get_data(self, num_samples=1):
         """
@@ -79,23 +81,27 @@ class ReSkinBase(serial.Serial):
             self.reset_input_buffer()
             while True:
                 # if self.in_waiting >=115:
-                if self.in_waiting >=self._msg_length:
-                    if self.read(self._msg_length)[-1] == 10:
+                if self.in_waiting >self._msg_length:
+                    if self.read(self._msg_length)[-2:] == b'\r\n':
                         break
-                    # self.reset_input_buffer()
-
+                    self.reset_input_buffer()
+        
         data = []
 
         while len(data) < num_samples:
-            if self.in_waiting >= self._msg_length:
+            if self.in_waiting > self._msg_length:
                 collect_start = time.time()
                 if self.burst_mode:
-                    zero_bytes = self.sensor.read(82)
+                    zero_bytes = self.read(self._msg_length)
+                    if zero_bytes[-2:] != b'\r\n':
+                        zero_bytes = self.read_until(b'\r\n')
+                        continue
+                    # print(zero_bytes[-2:] == b'\r\n')
                     decoded_zero_bytes = struct.unpack(
                         '@{}fcc'.format(self._msg_floats), zero_bytes)[:self._msg_floats]
                     
                 else:
-                    zero_bytes = self.sensor.readline()
+                    zero_bytes = self.readline()
                     decoded_zero_bytes = zero_bytes.decode('utf-8')
                     decoded_zero_bytes = decoded_zero_bytes.strip()
                     decoded_zero_bytes = [float(x) for x in decoded_zero_bytes.split()]
