@@ -17,12 +17,19 @@ class SensorProcess(Process):
         ID samples and keep count to ensure unique samples are passed to querying 
         process
     """
-    def __init__(self,sensor_settings):
+    def __init__(self,sensor_settings:ReSkinSettings, 
+        pipe_buffer_on_pause:bool=True, chunk_size:int=10000):
         """
         Parameters
         ----------
-        sensor : type[ReSkinBase]
-            Sensor object derived from ReSkinBase
+        sensor_settings : ReSkinSettings
+            Named tuple containing settings for ReSkin sensor
+        
+        pipe_buffer_on_pause : bool
+            Buffer will be piped internally when true.
+        
+        chunk_size : int
+            Quantum of data piped from buffer at one time.
         """
         super(SensorProcess, self).__init__()
         # self.sensor = ReSkinBase(
@@ -35,9 +42,15 @@ class SensorProcess(Process):
         self._pipe_in, self._pipe_out = Pipe()
         self._sample_cnt = 0
         
+        self.sensor_settings = sensor_settings
+
+        self.pipe_buffer_on_pause = pipe_buffer_on_pause
+        self._chunk_size = chunk_size
+
         self._event_is_streaming = Event()
         self._event_quit_request = Event()
-        self.sensor_settings = sensor_settings
+        self._event_sending_data = Event()
+
         atexit.register(self.join)
         pass
 
@@ -50,6 +63,19 @@ class SensorProcess(Process):
 
     def pause_streaming(self):
         self._event_is_streaming.clear()
+
+    def get_buffer(self, timeout=1.0):
+        """
+        Return the recorded buffer
+        """
+        rtn = []
+        if self._event_sending_data or self._buffer_size > 0:
+            self._event_sending_data.wait(timeout=timeout)
+            while self._pipe_in.poll() or self._buffer_size > 0:
+                rtn.extend(self._pipe_in.recv())
+            self._event_sending_data.clear()
+        
+        return rtn
 
     def join(self, timeout=None):
         """
@@ -95,7 +121,15 @@ class SensorProcess(Process):
                 if is_streaming:
                     is_streaming = False
 
-                pass
+                if self.pipe_buffer_on_pause and self._buffer_size > 0:
+                    self._event_sending_data.set()
+                    chk = self._chunk_size
+                    while len(buffer)>0:
+                        if chk > len(buffer):
+                            chk = len(buffer)
+                        self._pipe_out.send(buffer[0:chk])
+                        buffer[0:chk] = []
+                        self._buffer_size = len(buffer)
 
 if __name__ == '__main__':
     test_settings = ReSkinSettings(
