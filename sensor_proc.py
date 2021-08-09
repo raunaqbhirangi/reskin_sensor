@@ -55,8 +55,7 @@ class SensorProcess(Process):
 
         atexit.register(self.join)
         pass
-
-    # Might need to make sure we aren't passing mutable object.
+    
     @property
     def last_reading(self):
         return ReSkinData(
@@ -71,9 +70,15 @@ class SensorProcess(Process):
         return self._sample_cnt.value
 
     def start_streaming(self):
+        """
+        Starts streaming data from ReSkin sensor into the buffer
+        """
         self._event_is_streaming.set()
 
     def pause_streaming(self):
+        """
+        Stop streaming data from ReSkin sensor into the buffer
+        """
         self._event_is_streaming.clear()
 
     def get_samples(self, num_samples=5):
@@ -134,7 +139,6 @@ class SensorProcess(Process):
         """
         buffer = []
         # Initialize sensor
-        print(self._last_reading)
         self.sensor = ReSkinBase(
             num_mags=self.sensor_settings.num_mags,
             port=self.sensor_settings.port,
@@ -192,8 +196,10 @@ if __name__ == '__main__':
     print(test_proc.get_samples(100))
     test_proc.pause_streaming()
     
-    print(len(test_proc.get_buffer()))
-    print(test_proc.last_reading)
+    buf = test_proc.get_buffer()
+    print('Buffer length: ', len(buf))
+    print('Sample buffer element (last one): ', buf[-1])
+    print('Last reading: ', test_proc.last_reading)
     
     while True:
-        input('aaaa')
+        input('')

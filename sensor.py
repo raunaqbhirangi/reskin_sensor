@@ -58,7 +58,7 @@ class ReSkinBase(serial.Serial):
         self.flush()
         print("Initializing sensor")
         _, _, test_data = self.get_data(1)
-        print('got 1 datapoint')
+        print('got 1 datapoint. Test sample:')
         print(test_data)
 
         return
@@ -107,7 +107,6 @@ class ReSkinBase(serial.Serial):
                     decoded_zero_bytes = [float(x) for x in decoded_zero_bytes.split()]
                 
                 acq_delay = time.time() - collect_start
-                print(collect_start)
                 return collect_start, acq_delay, decoded_zero_bytes
                 # new_data = ReSkinData(time=collect_start,
                 #     acquisition_delay=time.time() - collect_start,
