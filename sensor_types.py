@@ -41,3 +41,8 @@ class ReSkinData:
         return 'Device ID: {}\n Time: {}\n Acquisition Delay: {}\n Data: {}'.format(
             self.device_id, self.time, self.acquisition_delay, self.data
         )
+    
+    def __repr__(self):
+        return '(did: {}, t: {:.2f}, acq_delay: {}, data_len: {})'.format(
+            self.device_id, self.time, self.acquisition_delay, len(self.data)
+        )

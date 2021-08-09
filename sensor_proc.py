@@ -40,8 +40,8 @@ class SensorProcess(Process):
         self._sample_cnt = Value(ct.c_uint64)
         self._buffer_size = Value(ct.c_uint64)
         
-        self._last_time = Value(ct.c_float)
-        self._last_delay = Value(ct.c_float)
+        self._last_time = Value(ct.c_double)
+        self._last_delay = Value(ct.c_double)
         self._last_reading = Array(ct.c_float, sensor_settings.num_mags * 4)
 
         self.sensor_settings = sensor_settings
@@ -85,8 +85,23 @@ class SensorProcess(Process):
         num_samples : int
             Number of samples required
         """
+        # Only sends samples if streaming is on. Sends empty list otherwise.
+        if not self._event_is_streaming.is_set():
+            return []
+        samples = []
+        if num_samples <=0:
+            return samples
+        last_cnt = self._sample_cnt.value
+        samples = [self.last_reading]
+        while len(samples) < num_samples:
+            # print(self._sample_cnt.value)
+            if last_cnt == self._sample_cnt.value:
+                continue
+            last_cnt = self._sample_cnt.value
+            samples.append(self.last_reading)
+        
+        return samples
 
-        pass
     def get_buffer(self, timeout=1.0):
         """
         Return the recorded buffer
@@ -174,8 +189,11 @@ if __name__ == '__main__':
     test_proc.start_streaming()
     import time
     time.sleep(2.0)
+    print(test_proc.get_samples(100))
     test_proc.pause_streaming()
+    
     print(len(test_proc.get_buffer()))
     print(test_proc.last_reading)
+    
     while True:
         input('aaaa')
