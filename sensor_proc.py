@@ -1,7 +1,7 @@
 import atexit
 from multiprocessing import Process, Event, Pipe
 
-from sensor import ReSkinBase
+from sensor import ReSkinBase, ReSkinSettings
 
 class SensorProcess(Process):
     """
@@ -25,19 +25,20 @@ class SensorProcess(Process):
             Sensor object derived from ReSkinBase
         """
         super(SensorProcess, self).__init__()
-        self.sensor = ReSkinBase(
-            num_mags=sensor_settings.num_mags,
-            port=sensor_settings.port,
-            baudrate=sensor_settings.baudrate,
-            burst_mode=sensor_settings.burst_mode,
-            device_id=sensor_settings.device_id)
+        # self.sensor = ReSkinBase(
+        #     num_mags=sensor_settings.num_mags,
+        #     port=sensor_settings.port,
+        #     baudrate=sensor_settings.baudrate,
+        #     burst_mode=sensor_settings.burst_mode,
+        #     device_id=sensor_settings.device_id)
 
         self._pipe_in, self._pipe_out = Pipe()
         self._sample_cnt = 0
         
         self._event_is_streaming = Event()
         self._event_quit_request = Event()
-        # atexit.register(self.join)
+        self.sensor_settings = sensor_settings
+        atexit.register(self.join)
         pass
 
     # Create a property for the last reading
@@ -55,7 +56,7 @@ class SensorProcess(Process):
         Clean up before exiting
         """
         self._event_quit_request.set()
-        self.sensor.close()
+        # self.sensor.close()
         super(SensorProcess, self).join(timeout)
     
     def run(self):
@@ -64,35 +65,48 @@ class SensorProcess(Process):
         """
         buffer = []
         # Initialize sensor
+        
+        self.sensor = ReSkinBase(
+            num_mags=self.sensor_settings.num_mags,
+            port=self.sensor_settings.port,
+            baudrate=self.sensor_settings.baudrate,
+            burst_mode=self.sensor_settings.burst_mode,
+            device_id=self.sensor_settings.device_id)
+        
         # self.sensor._initialize()
         is_streaming = False
 
-        while True:
-            pass
-        # while not self._event_quit_request.is_set():
-            # if self._event_is_streaming.is_set():
-            #     if not is_streaming:
-            #         is_streaming = True
-            #         # Any logging or stuff you want to do when polling has
-            #         # just started should go here
+        while not self._event_quit_request.is_set():
+            if self._event_is_streaming.is_set():
+                if not is_streaming:
+                    is_streaming = True
+                    # Any logging or stuff you want to do when polling has
+                    # just started should go here
                 
-            #     d = self.sensor.get_data()
+                d = self.sensor.get_data()
 
-            #     # self._last_reading = d
-            #     self._sample_cnt += 1
+                # self._last_reading = d
+                self._sample_cnt += 1
 
-            #     buffer.append(d)
-            #     self._buffer_size = len(buffer)
+                buffer.append(d)
+                self._buffer_size = len(buffer)
 
-            # else:
-            #     if is_streaming:
-            #         is_streaming = False
+            else:
+                if is_streaming:
+                    is_streaming = False
 
-                # pass
+                pass
 
 if __name__ == '__main__':
-    test_sensor = ReSkinBase(5, port="COM32", baudrate=115200)
-    test_proc = SensorProcess(test_sensor)
+    test_settings = ReSkinSettings(
+        num_mags=5,
+        port="COM32",
+        baudrate=115200,
+        burst_mode=True,
+        device_id=1
+    )
+    # test_sensor = ReSkinBase(5, port="COM32", baudrate=115200)
+    test_proc = SensorProcess(test_settings)
     test_proc.start()
     while True:
         input('aaaa')

@@ -36,5 +36,3 @@ class ReSkinData:
         self.acquisition_delay = acquisition_delay
         self.data = data
         self.device_id = device_id
-        
-        pass
