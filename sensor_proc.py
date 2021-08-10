@@ -2,6 +2,8 @@ import atexit
 import ctypes as ct
 from multiprocessing import Process, Event, Pipe, Value, Array
 
+import serial
+
 from sensor import ReSkinBase, ReSkinSettings
 from sensor_types import ReSkinData
 
@@ -54,7 +56,7 @@ class SensorProcess(Process):
         self._event_sending_data = Event()
 
         atexit.register(self.join)
-        pass
+        
     
     @property
     def last_reading(self):
@@ -73,7 +75,9 @@ class SensorProcess(Process):
         """
         Starts streaming data from ReSkin sensor into the buffer
         """
-        self._event_is_streaming.set()
+        if not self._event_quit_request.is_set():
+            self._event_is_streaming.set()
+            print('Started streaming')
 
     def pause_streaming(self):
         """
@@ -91,14 +95,15 @@ class SensorProcess(Process):
             Number of samples required
         """
         # Only sends samples if streaming is on. Sends empty list otherwise.
-        if not self._event_is_streaming.is_set():
-            return []
+
         samples = []
         if num_samples <=0:
             return samples
         last_cnt = self._sample_cnt.value
         samples = [self.last_reading]
         while len(samples) < num_samples:
+            if not self._event_is_streaming.is_set():
+                return []
             # print(self._sample_cnt.value)
             if last_cnt == self._sample_cnt.value:
                 continue
@@ -130,6 +135,7 @@ class SensorProcess(Process):
         Clean up before exiting
         """
         self._event_quit_request.set()
+        self.pause_streaming()
         # self.sensor.close()
         super(SensorProcess, self).join(timeout)
     
@@ -139,16 +145,21 @@ class SensorProcess(Process):
         """
         buffer = []
         # Initialize sensor
-        self.sensor = ReSkinBase(
-            num_mags=self.sensor_settings.num_mags,
-            port=self.sensor_settings.port,
-            baudrate=self.sensor_settings.baudrate,
-            burst_mode=self.sensor_settings.burst_mode,
-            device_id=self.sensor_settings.device_id)
-        
-        self.sensor._initialize()
-        is_streaming = False
+        try:
+            self.sensor = ReSkinBase(
+                num_mags=self.sensor_settings.num_mags,
+                port=self.sensor_settings.port,
+                baudrate=self.sensor_settings.baudrate,
+                burst_mode=self.sensor_settings.burst_mode,
+                device_id=self.sensor_settings.device_id)
+            self.sensor._initialize()
+        except serial.serialutil.SerialException as e:
+            self._event_quit_request.set()
+            print('ERROR: ', e)
 
+        
+        is_streaming = False
+        print(self._event_quit_request.is_set())
         while not self._event_quit_request.is_set():
             if self._event_is_streaming.is_set():
                 if not is_streaming:
@@ -176,6 +187,8 @@ class SensorProcess(Process):
                         self._pipe_out.send(buffer[0:chk])
                         buffer[0:chk] = []
                         self._buffer_size.value = len(buffer)
+        
+        self.pause_streaming()
 
 if __name__ == '__main__':
     test_settings = ReSkinSettings(
@@ -196,10 +209,10 @@ if __name__ == '__main__':
     print(test_proc.get_samples(100))
     test_proc.pause_streaming()
     
-    buf = test_proc.get_buffer()
-    print('Buffer length: ', len(buf))
-    print('Sample buffer element (last one): ', buf[-1])
-    print('Last reading: ', test_proc.last_reading)
+    # buf = test_proc.get_buffer()
+    # print('Buffer length: ', len(buf))
+    # print('Sample buffer element (last one): ', buf[-1])
+    # print('Last reading: ', test_proc.last_reading)
     
     while True:
         input('')
