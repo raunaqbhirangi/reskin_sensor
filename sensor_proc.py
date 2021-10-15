@@ -55,6 +55,8 @@ class SensorProcess(Process):
         self._event_quit_request = Event()
         self._event_sending_data = Event()
 
+        self._event_is_buffering = Event()
+
         atexit.register(self.join)
         
     
@@ -73,15 +75,42 @@ class SensorProcess(Process):
 
     def start_streaming(self):
         """
-        Starts streaming data from ReSkin sensor into the buffer
+        Starts streaming data from ReSkin sensor
         """
         if not self._event_quit_request.is_set():
             self._event_is_streaming.set()
             print('Started streaming')
 
+    def start_buffering(self, overwrite:bool=False):
+        """
+        Starts buffering ReSkin data. Call is ignored if already buffering
+
+        Parameters
+        ----------
+        overwrite : bool
+            Existing buffer is overwritten if true; appended if false. Ignored
+            if data is already buffering
+        """
+
+        if not self._event_is_buffering.is_set():
+            self._event_is_buffering.set()
+            if overwrite:
+                # Warn that buffer is about to be overwritten
+                raise NotImplementedError
+        else:
+            # Warn that data is already buffering
+            pass
+
+    def stop_buffering(self):
+        """
+        Stops buffering ReSkin data
+        """
+        self._event_is_buffering.clear()
+        pass
+
     def pause_streaming(self):
         """
-        Stop streaming data from ReSkin sensor into the buffer
+        Stop streaming data from ReSkin sensor
         """
         self._event_is_streaming.clear()
 
