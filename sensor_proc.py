@@ -98,7 +98,7 @@ class SensorProcess(Process):
             # Warn that data is already buffering
             print('Warning: Data is already buffering')
 
-    def stop_buffering(self):
+    def pause_buffering(self):
         """
         Stops buffering ReSkin data
         """
@@ -160,9 +160,9 @@ class SensorProcess(Process):
         Clean up before exiting
         """
         self._event_quit_request.set()
-        self.stop_buffering()
+        self.pause_buffering()
         self.pause_streaming()
-        # self.sensor.close()
+
         super(SensorProcess, self).join(timeout)
     
     def run(self):
@@ -184,7 +184,6 @@ class SensorProcess(Process):
             print('ERROR: ', e)
 
         is_streaming = False
-        print(self._event_quit_request.is_set())
         while not self._event_quit_request.is_set():
             if self._event_is_streaming.is_set():
                 if not is_streaming:
@@ -240,9 +239,13 @@ if __name__ == '__main__':
     
 
     test_proc.start_streaming()
+    test_proc.start_buffering()
     import time
     time.sleep(2.0)
-    print(test_proc.get_samples(100))
+    test_proc.pause_buffering()
+
+    print(len(test_proc.get_buffer()))
+    # print(test_proc.get_samples(100))
     test_proc.pause_streaming()
     
     # buf = test_proc.get_buffer()
