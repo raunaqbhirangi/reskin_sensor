@@ -22,15 +22,12 @@ class SensorProcess(Process):
         process
     """
     def __init__(self,sensor_settings:ReSkinSettings, 
-        pipe_buffer_on_pause:bool=True, chunk_size:int=10000):
+        chunk_size:int=10000):
         """
         Parameters
         ----------
         sensor_settings : ReSkinSettings
             Named tuple containing settings for ReSkin sensor
-        
-        pipe_buffer_on_pause : bool
-            Buffer will be piped internally when true.
         
         chunk_size : int
             Quantum of data piped from buffer at one time.
@@ -48,7 +45,6 @@ class SensorProcess(Process):
 
         self.sensor_settings = sensor_settings
 
-        self.pipe_buffer_on_pause = pipe_buffer_on_pause
         self._chunk_size = chunk_size
 
         self._event_is_streaming = Event()
@@ -93,20 +89,20 @@ class SensorProcess(Process):
         """
 
         if not self._event_is_buffering.is_set():
-            self._event_is_buffering.set()
             if overwrite:
                 # Warn that buffer is about to be overwritten
-                raise NotImplementedError
+                print('Warning: Overwriting non-empty buffer')
+                self.get_buffer()
+            self._event_is_buffering.set()
         else:
             # Warn that data is already buffering
-            pass
+            print('Warning: Data is already buffering')
 
     def stop_buffering(self):
         """
         Stops buffering ReSkin data
         """
         self._event_is_buffering.clear()
-        pass
 
     def pause_streaming(self):
         """
@@ -164,6 +160,7 @@ class SensorProcess(Process):
         Clean up before exiting
         """
         self._event_quit_request.set()
+        self.stop_buffering()
         self.pause_streaming()
         # self.sensor.close()
         super(SensorProcess, self).join(timeout)
@@ -186,28 +183,38 @@ class SensorProcess(Process):
             self._event_quit_request.set()
             print('ERROR: ', e)
 
-        
         is_streaming = False
         print(self._event_quit_request.is_set())
         while not self._event_quit_request.is_set():
             if self._event_is_streaming.is_set():
                 if not is_streaming:
                     is_streaming = True
-                    # Any logging or stuff you want to do when polling has
+                    # Any logging or stuff you want to do when streaming has
                     # just started should go here
                 self._last_time.value, self._last_delay.value, \
                     self._last_reading[:] = self.sensor.get_data()
 
                 self._sample_cnt.value += 1
 
-                buffer.append(self.last_reading)
-                self._buffer_size.value = len(buffer)
-
+                if self._event_is_buffering.is_set():
+                    buffer.append(self.last_reading)
+                    self._buffer_size.value = len(buffer)
+                elif self._buffer_size.value > 0:
+                    self._event_sending_data.set()
+                    chk = self._chunk_size
+                    while len(buffer)>0:
+                        if chk > len(buffer):
+                            chk = len(buffer)
+                        self._pipe_out.send(buffer[0:chk])
+                        buffer[0:chk] = []
+                        self._buffer_size.value = len(buffer)
+                    
             else:
                 if is_streaming:
                     is_streaming = False
+                    # Logging when streaming just stopped
 
-                if self.pipe_buffer_on_pause and self._buffer_size.value > 0:
+                if self._buffer_size.value > 0:
                     self._event_sending_data.set()
                     chk = self._chunk_size
                     while len(buffer)>0:
