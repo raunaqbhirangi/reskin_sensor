@@ -178,7 +178,7 @@ class ReSkinProcess(Process):
                 baudrate=self.sensor_settings.baudrate,
                 burst_mode=self.sensor_settings.burst_mode,
                 device_id=self.sensor_settings.device_id)
-            self.sensor._initialize()
+            # self.sensor._initialize()
         except serial.serialutil.SerialException as e:
             self._event_quit_request.set()
             print('ERROR: ', e)

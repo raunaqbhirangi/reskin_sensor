@@ -25,7 +25,7 @@ class ReSkinBase(serial.Serial):
     get_data(num_samples)
         Collects num_samples samples from sensor
     """
-    def __init__(self, num_mags:int = 1, port: str = None, baudrate: int = 9600, 
+    def __init__(self, num_mags:int = 1, port: str = None, baudrate: int = 115200, 
         burst_mode:bool = True, device_id=-1) -> None:
         """
         Parameters
@@ -39,7 +39,7 @@ class ReSkinBase(serial.Serial):
         burst_mode: bool
             Flag for whether sensor is using burst mode
         device_id: int
-            Sensor ID
+            Sensor ID; mostly useful when using multiple sensors simultaneously
         """
         super(ReSkinBase, self).__init__(port=port, baudrate=baudrate)
         
@@ -52,19 +52,34 @@ class ReSkinBase(serial.Serial):
         self._msg_floats = 4*num_mags
         self._msg_length = 4*self._msg_floats + 2
 
+        self._initialize()
+
     def _initialize(self):
         """
         Opens the serial port for communication with sensor
         """
         self.flush()
-        print("Initializing sensor")
-        _, _, test_data = self.get_data(1)
-        print('got 1 datapoint. Test sample:')
-        print(test_data)
+        print("Initializing sensor...")
+        try:
+            self.get_sample()
+            print('Initialization successful')
+        except:
+            print('Initialization failed. Please disconnect and reconnect sensor.')
 
-        return
+    def get_data(self, num_samples):
+        data = []
+        for _ in range(num_samples):
+            t, acqd, sample = self.get_sample()
+            data.append(ReSkinData(
+                time=t,
+                acq_delay=acqd,
+                data=sample,
+                dev_id=self.device_id
+            ))
+        
+        return data
 
-    def get_data(self, num_samples=1):
+    def get_sample(self, num_samples=1):
         """
         Collects requisite bytes of data from the serial communication
         channel
