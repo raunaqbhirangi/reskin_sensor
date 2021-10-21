@@ -67,6 +67,14 @@ class ReSkinBase(serial.Serial):
             print('Initialization failed. Please disconnect and reconnect sensor.')
 
     def get_data(self, num_samples):
+        """
+        Collects requisite number of samples from the sensor
+
+        Parameters
+        ----------
+        num_samples: int
+            Number of samples of data to be collected.
+        """
         data = []
         for _ in range(num_samples):
             t, acqd, sample = self.get_sample()
@@ -83,11 +91,7 @@ class ReSkinBase(serial.Serial):
         """
         Collects requisite bytes of data from the serial communication
         channel
-
-        Parameters
-        ----------
-        num_samples: int
-            Number of samples of data to be collected.
+        
         """
         # Hack to make sure we're not reading in gibberish. Filling up the input
         # buffer causes serial read to give out stale data. Resetting input buffer
@@ -103,9 +107,7 @@ class ReSkinBase(serial.Serial):
                         break
                     self.reset_input_buffer()
         
-        data = []
-
-        while len(data) < num_samples:
+        while True:
             if self.in_waiting > self._msg_length:
                 collect_start = time.time()
                 if self.burst_mode:
@@ -124,16 +126,10 @@ class ReSkinBase(serial.Serial):
                 
                 acq_delay = time.time() - collect_start
                 return collect_start, acq_delay, decoded_zero_bytes
-                # new_data = ReSkinData(time=collect_start,
-                #     acquisition_delay=time.time() - collect_start,
-                #     device_id=self.device_id, data=decoded_zero_bytes)
-                # data += [new_data]
-            
+
             else:
                 # Need checks to timeout if required
                 pass
         
-        return data
-
 if __name__ == '__main__':
     test = ReSkinBase(5, port="COM32", baudrate=115200)
