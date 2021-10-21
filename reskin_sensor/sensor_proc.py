@@ -4,10 +4,10 @@ from multiprocessing import Process, Event, Pipe, Value, Array
 
 import serial
 
-from sensor import ReSkinBase, ReSkinSettings
-from sensor_types import ReSkinData
+from .sensor import ReSkinBase, ReSkinSettings, ReSkinData
+# from sensor_types import ReSkinData
 
-class SensorProcess(Process):
+class ReSkinProcess(Process):
     """
     ReSkin Sensor process. Keeps datastream running in the background.
     
@@ -32,7 +32,7 @@ class SensorProcess(Process):
         chunk_size : int
             Quantum of data piped from buffer at one time.
         """
-        super(SensorProcess, self).__init__()
+        super(ReSkinProcess, self).__init__()
         self.device_id = sensor_settings.device_id
 
         self._pipe_in, self._pipe_out = Pipe()
@@ -163,7 +163,7 @@ class SensorProcess(Process):
         self.pause_buffering()
         self.pause_streaming()
 
-        super(SensorProcess, self).join(timeout)
+        super(ReSkinProcess, self).join(timeout)
     
     def run(self):
         """
@@ -234,7 +234,7 @@ if __name__ == '__main__':
         device_id=1
     )
     # test_sensor = ReSkinBase(5, port="COM32", baudrate=115200)
-    test_proc = SensorProcess(test_settings, pipe_buffer_on_pause=True)
+    test_proc = ReSkinProcess(test_settings, pipe_buffer_on_pause=True)
     test_proc.start()
     
 

@@ -7,10 +7,11 @@ import numpy as np
 import serial
 import struct
 
-from sensor_types import ReSkinData
-
 ReSkinSettings = collections.namedtuple('ReSkinSettings',
     'num_mags port baudrate burst_mode device_id')
+
+ReSkinData = collections.namedtuple('ReSkinData',
+    'time, acq_delay, data, dev_id')
 
 class ReSkinBase(serial.Serial):
     """
