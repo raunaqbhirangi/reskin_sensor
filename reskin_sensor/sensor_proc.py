@@ -5,7 +5,6 @@ from multiprocessing import Process, Event, Pipe, Value, Array
 import serial
 
 from .sensor import ReSkinBase, ReSkinSettings, ReSkinData
-# from sensor_types import ReSkinData
 
 class ReSkinProcess(Process):
     """
