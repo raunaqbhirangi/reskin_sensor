@@ -20,7 +20,23 @@ class ReSkinProcess(Process):
     _sample_cnt : int
         ID samples and keep count to ensure unique samples are passed to querying 
         process
+    
+    Methods
+    -------
+    start_streaming():
+        Start streaming data from ReSkin sensor
+    start_buffering(overwrite=False):
+        Start buffering ReSkin data. Call is ignored if already buffering
+    pause_buffering():
+        Stop buffering ReSkin data
+    pause_streaming():
+        Stop streaming data from ReSkin sensor
+    get_data(num_samples=5):
+        Return a specified number of samples from the ReSkin Sensor
+    get_buffer(timeout=1.0, pause_if_buffering=False):
+        Return the recorded buffer
     """
+
     def __init__(self,sensor_settings:ReSkinSettings, 
         chunk_size:int=10000):
         """
@@ -70,16 +86,14 @@ class ReSkinProcess(Process):
         return self._sample_cnt.value
 
     def start_streaming(self):
-        """
-        Starts streaming data from ReSkin sensor
-        """
+        """Start streaming data from ReSkin sensor"""
         if not self._event_quit_request.is_set():
             self._event_is_streaming.set()
             print('Started streaming')
 
     def start_buffering(self, overwrite:bool=False):
         """
-        Starts buffering ReSkin data. Call is ignored if already buffering
+        Start buffering ReSkin data. Call is ignored if already buffering
 
         Parameters
         ----------
@@ -99,18 +113,14 @@ class ReSkinProcess(Process):
             print('Warning: Data is already buffering')
 
     def pause_buffering(self):
-        """
-        Stops buffering ReSkin data
-        """
+        """Stop buffering ReSkin data"""
         self._event_is_buffering.clear()
 
     def pause_streaming(self):
-        """
-        Stop streaming data from ReSkin sensor
-        """
+        """Stop streaming data from ReSkin sensor"""
         self._event_is_streaming.clear()
 
-    def get_samples(self, num_samples=5):
+    def get_data(self, num_samples=5):
         """
         Return a specified number of samples from the ReSkin Sensor
         
@@ -128,6 +138,7 @@ class ReSkinProcess(Process):
         samples = [self.last_reading]
         while len(samples) < num_samples:
             if not self._event_is_streaming.is_set():
+                print('Please start streaming first.')
                 return []
             # print(self._sample_cnt.value)
             if last_cnt == self._sample_cnt.value:
@@ -166,9 +177,7 @@ class ReSkinProcess(Process):
         return rtn
 
     def join(self, timeout=None):
-        """
-        Clean up before exiting
-        """
+        """Clean up before exiting"""
         self._event_quit_request.set()
         self.pause_buffering()
         self.pause_streaming()
@@ -176,9 +185,7 @@ class ReSkinProcess(Process):
         super(ReSkinProcess, self).join(timeout)
     
     def run(self):
-        """
-        This loop runs until it's asked to quit.
-        """
+        """This loop runs until it's asked to quit."""
         buffer = []
         # Initialize sensor
         try:

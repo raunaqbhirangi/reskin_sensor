@@ -23,7 +23,7 @@ if __name__ == '__main__':
     # Start sensor stream
     sensor_stream.start()
     time.sleep(0.1)
-    
+
     # Buffer data for two seconds and return buffer
     if sensor_stream.is_alive():
         sensor_stream.start_buffering()
@@ -39,6 +39,13 @@ if __name__ == '__main__':
         if buffered_data is not None:
             print('Time elapsed: {}, Number of datapoints: {}'.format(
                 buffer_stop - buffer_start, len(buffered_data)))
+
+        # Get a specified number of samples
+        test_samples = sensor_stream.get_data(num_samples=5)
+        print('Columns: ', ', \t'.join(
+            ['T{0}, \tBx{0}, \tBy{0}, \tBz{0}'.format(ind) for ind in range(test_settings.num_mags)]))
+        for sid, sample in enumerate(test_samples):
+            print('Sample {}: '.format(sid+1) + str(['{:.2f}'.format(d) for d in sample.data]))
 
         # Pause sensor stream
         sensor_stream.pause_streaming()
