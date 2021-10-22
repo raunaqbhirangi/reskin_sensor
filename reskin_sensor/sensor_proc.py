@@ -1,4 +1,5 @@
 import atexit
+import sys
 import ctypes as ct
 from multiprocessing import Process, Event, Pipe, Value, Array
 
@@ -192,6 +193,7 @@ class ReSkinProcess(Process):
         except serial.serialutil.SerialException as e:
             self._event_quit_request.set()
             print('ERROR: ', e)
+            sys.exit(1)
 
         is_streaming = False
         while not self._event_quit_request.is_set():
