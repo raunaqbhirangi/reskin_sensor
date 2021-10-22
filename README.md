@@ -18,11 +18,14 @@ $ pip install -e .
 ```
 ## Usage
 
-1. Use the [Arduino IDE](https://www.arduino.cc/en/software) to upload code to a microcontroller (we recommend the Adafruit Trinket M0 or the Adafruit QT PY).
+1. Connect the 5X board to the microcontroller. 
 
-2. Connect the 5X board to the microcontroller. 
+2. Connect the microcontroller (we recommend the Adafruit Trinket M0 or the Adafruit QT PY) to the computer using a suitable USB cable
 
-3. Run test code on the computer
+3. Use the [Arduino IDE](https://www.arduino.cc/en/software) to upload code to a microcontroller.
+If you get a `can't open device "<port-name>": Permission denied` error, modify permissions to allow read and write on that port. On Linux, you would look like `sudo chmod a+rw <port-name>`
+
+4. Run test code on the computer
 ```
-$ python tests/sensor_proc_test.py
+$ python tests/sensor_proc_test.py -p <port-name>
 ```
