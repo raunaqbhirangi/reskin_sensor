@@ -24,9 +24,9 @@ if __name__ == '__main__':
     buffer_start = time.time()
     time.sleep(2.0)
     
-    # sensor_stream.pause_buffering()
+    sensor_stream.pause_buffering()
     buffer_stop = time.time()
-    
+
     # Get buffered data
     buffered_data = sensor_stream.get_buffer()
     
