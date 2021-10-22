@@ -1,5 +1,5 @@
 # Reskin Sensor Library
-This is a python library to interface with [ReSkin](https://openreview.net/forum?id=87_OJU4sw3V) sensors.
+This is a python library to interface with [ReSkin](https://openreview.net/forum?id=87_OJU4sw3V) sensors. We provide two classes for interfacing with [ReSkin](https://openreview.net/forum?id=87_OJU4sw3V). The `ReSkinBase` class is good for standalone data collection: it blocks code execution while data is being collected. The `ReSkinProcess` class can be used for non-blocking background data collection. Data can be buffered in the background while you run the rest of your code.  
 
 ## Installation
 
@@ -23,7 +23,10 @@ $ pip install -e .
 2. Connect the microcontroller (we recommend the Adafruit Trinket M0 or the Adafruit QT PY) to the computer using a suitable USB cable
 
 3. Use the [Arduino IDE](https://www.arduino.cc/en/software) to upload code to a microcontroller.
-If you get a `can't open device "<port-name>": Permission denied` error, modify permissions to allow read and write on that port. On Linux, you would look like `sudo chmod a+rw <port-name>`
+If you get a `can't open device "<port-name>": Permission denied` error, modify permissions to allow read and write on that port. On Linux, this would look like 
+```
+$ sudo chmod a+rw <port-name>
+```
 
 4. Run test code on the computer
 ```
