@@ -93,7 +93,7 @@ class ReSkinBase(serial.Serial):
         channel
         
         """
-        # Hack to make sure we're not reading in gibberish. Filling up the input
+        # Just to make sure we're not reading in gibberish. Filling up the input
         # buffer causes serial read to give out stale data. Resetting input buffer
         # can occasionally result gibberish coming in. Must ensure that that does
         # not happen
@@ -131,5 +131,5 @@ class ReSkinBase(serial.Serial):
                 # Need checks to timeout if required
                 pass
         
-if __name__ == '__main__':
-    test = ReSkinBase(5, port="COM32", baudrate=115200)
+# if __name__ == '__main__':
+#     test = ReSkinBase(5, port="COM32", baudrate=115200)

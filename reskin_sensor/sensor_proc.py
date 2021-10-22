@@ -9,7 +9,7 @@ from .sensor import ReSkinBase, ReSkinSettings, ReSkinData
 
 class ReSkinProcess(Process):
     """
-    ReSkin Sensor process. Keeps datastream running in the background.
+    ReSkin Sensor process. Keeps datastream running in the background. 
     
     Attributes
     ----------
@@ -60,9 +60,9 @@ class ReSkinProcess(Process):
     def last_reading(self):
         return ReSkinData(
             time = self._last_time.value,
-            acquisition_delay=self._last_delay.value,
+            acq_delay=self._last_delay.value,
             data = self._last_reading[:],
-            device_id=self.device_id)
+            dev_id=self.device_id)
         # return self._last_reading
     
     @property
@@ -137,7 +137,7 @@ class ReSkinProcess(Process):
         
         return samples
 
-    def get_buffer(self, timeout=1.0):
+    def get_buffer(self, timeout:float=1.0, pause_if_buffering:bool=False):
         """
         Return the recorded buffer
         
@@ -145,7 +145,17 @@ class ReSkinProcess(Process):
         ----------
         timeout : int
             Time to wait for data to start getting piped.
+        
+        pause_if_buffering : bool
+            Pauses buffering if still running, and then collects and returns buffer
         """
+        # Check if buffering is paused
+        if self._event_is_buffering.is_set():
+            if not pause_if_buffering:
+                print('Cannot get buffer while data is buffering. Set pause_if_buffering=True to pause buffering and retrieve buffer')
+                return
+            else:
+                self._event_is_buffering.clear()
         rtn = []
         if self._event_sending_data.is_set() or self._buffer_size.value > 0:
             self._event_sending_data.wait(timeout=timeout)
@@ -179,6 +189,7 @@ class ReSkinProcess(Process):
                 burst_mode=self.sensor_settings.burst_mode,
                 device_id=self.sensor_settings.device_id)
             # self.sensor._initialize()
+            self.start_streaming()
         except serial.serialutil.SerialException as e:
             self._event_quit_request.set()
             print('ERROR: ', e)
@@ -191,7 +202,7 @@ class ReSkinProcess(Process):
                     # Any logging or stuff you want to do when streaming has
                     # just started should go here
                 self._last_time.value, self._last_delay.value, \
-                    self._last_reading[:] = self.sensor.get_data()
+                    self._last_reading[:] = self.sensor.get_sample()
 
                 self._sample_cnt.value += 1
 
