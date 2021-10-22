@@ -1,9 +1,15 @@
+import argparse
 from reskin_sensor import ReSkinBase
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Test code to query ReSkin for a fixed number of data samples')
+    parser.add_argument('-p','--port', type=str, help='port to which the microcontroller is connected', required=True)
+    parser.add_argument('-n','--num_mags', type=int, help='number of magentometers on the sensor board', default=5)
+    args = parser.parse_args()
+    
     test_sensor = ReSkinBase(
-        num_mags=5,
-        port='/dev/ttyACM0',
+        num_mags=args.num_mags,
+        port=args.port,
         burst_mode=True,
         device_id=1
     )
