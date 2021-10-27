@@ -22,7 +22,7 @@ $ pip install -e .
 
 2. Connect the microcontroller (we recommend the Adafruit Trinket M0 or the Adafruit QT PY) to the computer using a suitable USB cable
 
-3. Use the [Arduino IDE](https://www.arduino.cc/en/software) to upload code to a microcontroller.
+3. Use the [Arduino IDE](https://www.arduino.cc/en/software) to upload code to a microcontroller. The code as well as upload instructions can be found in the [arduino](./arduino) folder.
 If you get a `can't open device "<port-name>": Permission denied` error, modify permissions to allow read and write on that port. On Linux, this would look like 
 ```
 $ sudo chmod a+rw <port-name>
