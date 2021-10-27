@@ -12,20 +12,26 @@ We generally recommend the QT Py as it has an on-board Qwiic/STEMMA connector an
 ### Trinket M0
  - [Qwiic/STEMMA to breadboard cable](https://www.adafruit.com/product/4209)
  - micro-USB to USB-A cable
+ - ReSkin circuit board
  
 ### Qt Py
  - [Qwiic/STEMMA cable](https://www.adafruit.com/product/4401)
  - USB-C to USB-A cable
+ - ReSkin circuit board
  
 ## Installing Arduino Library (submodule)
 
-TODO
+The library for the magnetometers is included as a submodule of this repo. Install the submodule
+```
+git submodule update --init
+```
+Move this library into your local libraries folder for your Arduino installation.
 
-## Finding your port 
+## Finding your port (Linux)
 
-Use the port in the tests/ as input to the -p argument.
-
-### Linux
-### Windows
-### Mac
+Use the port in the tests/ as input to the -p argument. One of the simplest methods is to list all connected USB devices
+```
+lsusb
+```
+Then, connect your microcontroller and rerun the command. The new device between the two lists is your port.
 
