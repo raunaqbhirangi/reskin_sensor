@@ -4,7 +4,7 @@ from pygame.locals import *
 import math
 import time
 import numpy as np
-from reskin_sensor import ReSkinBase, sensor
+from reskin_sensor import ReSkinBase
 
 def init_pygame():
     time.sleep(1)
@@ -43,6 +43,7 @@ if __name__ == '__main__':
     temp_mask[::4] = False
     
     clock, screen, bg = init_pygame()
+    
     # read first 100 samples as baseline
     numBaselineSamples = 100
 
@@ -69,7 +70,6 @@ if __name__ == '__main__':
         for idx in range(5):
             center_arrow = chip_locations[idx]
             angle = math.atan2(input_data[3*idx+1],input_data[3*idx])
-            #print(angle)
             z = math.sqrt((input_data[3*idx]*input_data[3*idx]+input_data[3*idx+1]*input_data[3*idx+1]))
             x = center_arrow[0] + math.sin(angle)*z
             y = center_arrow[1] + math.cos(angle)*z
