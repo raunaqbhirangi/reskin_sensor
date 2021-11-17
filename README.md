@@ -33,4 +33,4 @@ $ sudo chmod a+rw <port-name>
 $ python tests/sensor_proc_test.py -p <port-name>
 ```
 ## Credits
-This package is maintained by [Raunaq Bhirangi](https://www.cs.cmu.edu/~rbhirang/) and [Tess Hellebrekers](https://tesshellebrekers.com/). We would also like to cite the [pyForceDAQ](https://github.com/lindemann09/pyForceDAQ) library which was used as a reference in structuring this package.
+This package is maintained by [Raunaq Bhirangi](https://www.cs.cmu.edu/~rbhirang/). We would also like to cite the [pyForceDAQ](https://github.com/lindemann09/pyForceDAQ) library which was used as a reference in structuring this package.

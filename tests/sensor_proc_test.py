@@ -1,7 +1,7 @@
 import argparse
 import time
 
-from reskin_sensor import ReSkinProcess, ReSkinSettings, sensor
+from reskin_sensor import ReSkinProcess, ReSkinSettings
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test code to run a ReSkin streaming process in the background. Allows data to be collected without code blocking')
