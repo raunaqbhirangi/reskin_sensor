@@ -3,16 +3,16 @@ This is a python library to interface with [ReSkin](https://openreview.net/forum
 
 ## Installation
 
+This package can be installed using pip:
+```
+pip install reskin_sensor
+```
+Alternatively,
 1. Clone this repository using 
 ```
-$ git clone https://github.com/raunaqbhirangi/reskin_sensor.git
+$ git clone https://github.com/raunaqbhirangi/reskin_sensor.git --recursive
 ```
-2. Install dependencies from `requirements.txt`
-```
-$ pip install -r requirements.txt
-```
-
-3. Install this package using
+2. Install this package using
 ```
 $ pip install -e .
 ```
