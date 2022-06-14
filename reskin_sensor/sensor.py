@@ -1,11 +1,8 @@
-import os
-import sys
-import time
 import collections
-
-import numpy as np
-import serial
 import struct
+import time
+
+import serial
 
 ReSkinSettings = collections.namedtuple('ReSkinSettings',
     'num_mags port baudrate burst_mode device_id')
