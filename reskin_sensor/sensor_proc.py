@@ -1,25 +1,34 @@
 import atexit
-import sys
 import ctypes as ct
+import sys
 from multiprocessing import Process, Event, Pipe, Value, Array
 
 import serial
 
-from .sensor import ReSkinBase, ReSkinSettings, ReSkinData
+from .sensor import ReSkinBase, ReSkinData
+
 
 class ReSkinProcess(Process):
     """
-    ReSkin Sensor process. Keeps datastream running in the background. 
-    
+    Process to keep ReSkin datastream running in the background.
+
     Attributes
     ----------
-    sensor : ReSkinSettings
-        SensorSettings object
-    _pipe_in, _pipe_out : Pipe
-        Two ends of a pipe for communicating with the sensor
-    _sample_cnt : int
-        ID samples and keep count to ensure unique samples are passed to querying 
-        process
+    num_mags: int
+            Number of magnetometers connected to the sensor
+    port : str
+        System port that the sensor is connected to
+    baudrate: int
+        Baudrate at which data is transmitted by sensor
+    burst_mode: bool
+        Flag for whether sensor is using burst mode
+    device_id: int
+        Sensor ID; mostly useful when using multiple sensors simultaneously
+    temp_filtered: bool
+        Flag indicating if temperature readings should be filtered from
+        the output
+    chunk_size : int
+        Quantum of data piped from buffer at one time.
     
     Methods
     -------
@@ -37,19 +46,22 @@ class ReSkinProcess(Process):
         Return the recorded buffer
     """
 
-    def __init__(self,sensor_settings:ReSkinSettings, 
-        chunk_size:int=10000):
-        """
-        Parameters
-        ----------
-        sensor_settings : ReSkinSettings
-            Named tuple containing settings for ReSkin sensor
-        
-        chunk_size : int
-            Quantum of data piped from buffer at one time.
-        """
+    def __init__(self,
+                 num_mags:int = 1,
+                 port: str = None,
+                 baudrate: int = 115200,
+                 burst_mode: bool = True,
+                 device_id: int = -1,
+                 temp_filtered: bool = False,
+                 chunk_size: int = 10000):
+        """Initializes a ReSkinProcess object."""
         super(ReSkinProcess, self).__init__()
-        self.device_id = sensor_settings.device_id
+        self.num_mags = num_mags
+        self.port = port
+        self.baudrate = baudrate
+        self.burst_mode = burst_mode
+        self.device_id = device_id
+        self.temp_filtered = temp_filtered
 
         self._pipe_in, self._pipe_out = Pipe()
         self._sample_cnt = Value(ct.c_uint64)
@@ -57,9 +69,7 @@ class ReSkinProcess(Process):
         
         self._last_time = Value(ct.c_double)
         self._last_delay = Value(ct.c_double)
-        self._last_reading = Array(ct.c_float, sensor_settings.num_mags * 4)
-
-        self.sensor_settings = sensor_settings
+        self._last_reading = Array(ct.c_float, self.num_mags * 4)
 
         self._chunk_size = chunk_size
 
@@ -70,8 +80,7 @@ class ReSkinProcess(Process):
         self._event_is_buffering = Event()
 
         atexit.register(self.join)
-        
-    
+
     @property
     def last_reading(self):
         return ReSkinData(
@@ -163,7 +172,9 @@ class ReSkinProcess(Process):
         # Check if buffering is paused
         if self._event_is_buffering.is_set():
             if not pause_if_buffering:
-                print('Cannot get buffer while data is buffering. Set pause_if_buffering=True to pause buffering and retrieve buffer')
+                print('Cannot get buffer while data is buffering. Set '
+                      'pause_if_buffering=True to pause buffering and '
+                      'retrieve buffer')
                 return
             else:
                 self._event_is_buffering.clear()
@@ -190,12 +201,12 @@ class ReSkinProcess(Process):
         # Initialize sensor
         try:
             self.sensor = ReSkinBase(
-                num_mags=self.sensor_settings.num_mags,
-                port=self.sensor_settings.port,
-                baudrate=self.sensor_settings.baudrate,
-                burst_mode=self.sensor_settings.burst_mode,
-                device_id=self.sensor_settings.device_id,
-                temp_filtered=self.sensor_settings.temp_filtered)
+                num_mags=self.num_mags,
+                port=self.port,
+                baudrate=self.baudrate,
+                burst_mode=self.burst_mode,
+                device_id=self.device_id,
+                temp_filtered=self.temp_filtered)
             # self.sensor._initialize()
             self.start_streaming()
         except serial.serialutil.SerialException as e:
@@ -244,34 +255,3 @@ class ReSkinProcess(Process):
                         self._buffer_size.value = len(buffer)
         
         self.pause_streaming()
-
-if __name__ == '__main__':
-    test_settings = ReSkinSettings(
-        num_mags=5,
-        port="COM32",
-        baudrate=115200,
-        burst_mode=True,
-        device_id=1
-    )
-    # test_sensor = ReSkinBase(5, port="COM32", baudrate=115200)
-    test_proc = ReSkinProcess(test_settings, pipe_buffer_on_pause=True)
-    test_proc.start()
-    
-
-    test_proc.start_streaming()
-    test_proc.start_buffering()
-    import time
-    time.sleep(2.0)
-    test_proc.pause_buffering()
-
-    print(len(test_proc.get_buffer()))
-    # print(test_proc.get_samples(100))
-    test_proc.pause_streaming()
-    
-    # buf = test_proc.get_buffer()
-    # print('Buffer length: ', len(buf))
-    # print('Sample buffer element (last one): ', buf[-1])
-    # print('Last reading: ', test_proc.last_reading)
-    
-    while True:
-        input('')
