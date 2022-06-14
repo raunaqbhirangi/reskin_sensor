@@ -7,33 +7,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Test code to run a ReSkin streaming process in the background. Allows data to be collected without code blocking"
     )
-    parser.add_argument(
-        "-p",
-        "--port",
-        type=str,
-        help="port to which the microcontroller is connected",
-        required=True,
-    )
-    parser.add_argument(
-        "-b",
-        "--baudrate",
-        type=str,
-        help="baudrate at which the microcontroller is streaming data",
-        default=115200,
-    )
-    parser.add_argument(
-        "-n",
-        "--num_mags",
-        type=int,
-        help="number of magentometers on the sensor board",
-        default=5,
-    )
-    parser.add_argument(
-        "-tf",
-        "--temp_filtered",
-        action="store_true",
-        help="flag to filter temperature from sensor output",
-    )
+    # fmt: off
+    parser.add_argument("-p", "--port", type=str, help="port to which the microcontroller is connected", required=True,)
+    parser.add_argument("-b", "--baudrate", type=str, help="baudrate at which the microcontroller is streaming data", default=115200,)
+    parser.add_argument("-n", "--num_mags", type=int, help="number of magnetometers on the sensor board", default=5,)
+    parser.add_argument("-tf", "--temp_filtered", action="store_true", help="flag to filter temperature from sensor output",)
+    # fmt: on
     args = parser.parse_args()
 
     # Create sensor stream
