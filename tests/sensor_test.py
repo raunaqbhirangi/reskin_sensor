@@ -2,30 +2,14 @@ import argparse
 from reskin_sensor import ReSkinBase
 
 if __name__ == "__main__":
+    # fmt: off
     parser = argparse.ArgumentParser(
         description="Test code to query ReSkin for a fixed number of data samples"
     )
-    parser.add_argument(
-        "-p",
-        "--port",
-        type=str,
-        help="port to which the microcontroller is connected",
-        required=True,
-    )
-    parser.add_argument(
-        "-b",
-        "--baudrate",
-        type=str,
-        help="baudrate at which the microcontroller is streaming data",
-        default=115200,
-    )
-    parser.add_argument(
-        "-n",
-        "--num_mags",
-        type=int,
-        help="number of magentometers on the sensor board",
-        default=5,
-    )
+    parser.add_argument("-p", "--port", type=str, help="port to which the microcontroller is connected", required=True,)
+    parser.add_argument("-b", "--baudrate", type=str, help="baudrate at which the microcontroller is streaming data", default=115200,)
+    parser.add_argument("-n", "--num_mags", type=int, help="number of magnetometers on the sensor board", default=5,)
+    # fmt: on
     args = parser.parse_args()
 
     test_sensor = ReSkinBase(

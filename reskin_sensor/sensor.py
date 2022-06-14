@@ -42,6 +42,7 @@ class ReSkinBase(serial.Serial):
         burst_mode: bool = True,
         device_id: int = -1,
         temp_filtered: bool = False,
+        reskin_data_struct: bool = True,
     ) -> None:
         """Initializes a ReSkinBase object."""
         super(ReSkinBase, self).__init__(port=port, baudrate=baudrate)
@@ -51,11 +52,12 @@ class ReSkinBase(serial.Serial):
         self.baudrate = baudrate
         self.burst_mode = burst_mode
         self.device_id = device_id
+        self.reskin_data_struct = reskin_data_struct
 
         self._msg_floats = 4 * num_mags
         self._msg_length = 4 * self._msg_floats + 2
 
-        self._temp_mask = np.ones((self._msg_length,), dtype=bool)
+        self._temp_mask = np.ones((self._msg_floats,), dtype=bool)
         if temp_filtered:
             self._temp_mask[::4] = False
 
@@ -85,14 +87,21 @@ class ReSkinBase(serial.Serial):
         data = []
         for _ in range(num_samples):
             t, acqd, sample = self.get_sample()
-            data.append(
-                ReSkinData(
-                    time=t,
-                    acq_delay=acqd,
-                    data=np.array(sample)[self._temp_mask],
-                    dev_id=self.device_id,
+            if self.reskin_data_struct:
+                data.append(
+                    ReSkinData(
+                        time=t,
+                        acq_delay=acqd,
+                        data=np.array(sample)[self._temp_mask],
+                        dev_id=self.device_id,
+                    )
                 )
-            )
+            else:
+                data.append(
+                    np.concatenate(
+                        ([t], [acqd], np.array(sample)[self._temp_mask], self.device_id)
+                    )
+                )
 
         return data
 
@@ -140,7 +149,3 @@ class ReSkinBase(serial.Serial):
             else:
                 # Need checks to timeout if required
                 pass
-
-
-# if __name__ == '__main__':
-#     test = ReSkinBase(5, port="COM32", baudrate=115200)

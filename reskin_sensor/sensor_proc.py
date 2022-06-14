@@ -3,6 +3,7 @@ import ctypes as ct
 import sys
 from multiprocessing import Process, Event, Pipe, Value, Array
 
+import numpy as np
 import serial
 
 from .sensor import ReSkinBase, ReSkinData
@@ -54,6 +55,7 @@ class ReSkinProcess(Process):
         burst_mode: bool = True,
         device_id: int = -1,
         temp_filtered: bool = False,
+        reskin_data_struct: bool = True,
         chunk_size: int = 10000,
     ):
         """Initializes a ReSkinProcess object."""
@@ -64,6 +66,7 @@ class ReSkinProcess(Process):
         self.burst_mode = burst_mode
         self.device_id = device_id
         self.temp_filtered = temp_filtered
+        self.reskin_data_struct = reskin_data_struct
 
         self._pipe_in, self._pipe_out = Pipe()
         self._sample_cnt = Value(ct.c_uint64)
@@ -85,12 +88,22 @@ class ReSkinProcess(Process):
 
     @property
     def last_reading(self):
-        return ReSkinData(
-            time=self._last_time.value,
-            acq_delay=self._last_delay.value,
-            data=self._last_reading[:],
-            dev_id=self.device_id,
-        )
+        if self.reskin_data_struct:
+            return ReSkinData(
+                time=self._last_time.value,
+                acq_delay=self._last_delay.value,
+                data=self._last_reading[:],
+                dev_id=self.device_id,
+            )
+        else:
+            return np.concatenate(
+                (
+                    [self._last_time.value],
+                    [self._last_delay.value],
+                    self._last_reading[:],
+                    [self.device_id],
+                )
+            )
         # return self._last_reading
 
     @property
@@ -212,6 +225,7 @@ class ReSkinProcess(Process):
                 burst_mode=self.burst_mode,
                 device_id=self.device_id,
                 temp_filtered=self.temp_filtered,
+                reskin_data_struct=True,
             )
             # self.sensor._initialize()
             self.start_streaming()
