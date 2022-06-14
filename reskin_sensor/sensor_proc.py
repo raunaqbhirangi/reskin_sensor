@@ -194,7 +194,8 @@ class ReSkinProcess(Process):
                 port=self.sensor_settings.port,
                 baudrate=self.sensor_settings.baudrate,
                 burst_mode=self.sensor_settings.burst_mode,
-                device_id=self.sensor_settings.device_id)
+                device_id=self.sensor_settings.device_id,
+                temp_filtered=self.sensor_settings.temp_filtered)
             # self.sensor._initialize()
             self.start_streaming()
         except serial.serialutil.SerialException as e:
