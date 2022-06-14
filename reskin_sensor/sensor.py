@@ -5,8 +5,8 @@ import time
 import numpy as np
 import serial
 
-ReSkinData = collections.namedtuple('ReSkinData',
-    'time, acq_delay, data, dev_id')
+ReSkinData = collections.namedtuple("ReSkinData", "time, acq_delay, data, dev_id")
+
 
 class ReSkinBase(serial.Serial):
     """
@@ -15,7 +15,7 @@ class ReSkinBase(serial.Serial):
     Attributes
     ----------
     num_mags: int
-            Number of magnetometers connected to the sensor
+        Number of magnetometers connected to the sensor
     port : str
         System port that the sensor is connected to
     baudrate: int
@@ -33,13 +33,16 @@ class ReSkinBase(serial.Serial):
     get_data(num_samples)
         Collects num_samples samples from sensor
     """
-    def __init__(self,
-                 num_mags:int = 1,
-                 port: str = None,
-                 baudrate: int = 115200,
-                 burst_mode: bool = True,
-                 device_id: int = -1,
-                 temp_filtered: bool = False) -> None:
+
+    def __init__(
+        self,
+        num_mags: int = 1,
+        port: str = None,
+        baudrate: int = 115200,
+        burst_mode: bool = True,
+        device_id: int = -1,
+        temp_filtered: bool = False,
+    ) -> None:
         """Initializes a ReSkinBase object."""
         super(ReSkinBase, self).__init__(port=port, baudrate=baudrate)
 
@@ -49,8 +52,8 @@ class ReSkinBase(serial.Serial):
         self.burst_mode = burst_mode
         self.device_id = device_id
 
-        self._msg_floats = 4*num_mags
-        self._msg_length = 4*self._msg_floats + 2
+        self._msg_floats = 4 * num_mags
+        self._msg_length = 4 * self._msg_floats + 2
 
         self._temp_mask = np.ones((self._msg_length,), dtype=bool)
         if temp_filtered:
@@ -66,9 +69,9 @@ class ReSkinBase(serial.Serial):
         print("Initializing sensor...")
         try:
             self.get_sample()
-            print('Initialization successful')
+            print("Initialization successful")
         except:
-            print('Initialization failed. Please disconnect and reconnect sensor.')
+            print("Initialization failed. Please disconnect and reconnect sensor.")
 
     def get_data(self, num_samples):
         """
@@ -82,12 +85,14 @@ class ReSkinBase(serial.Serial):
         data = []
         for _ in range(num_samples):
             t, acqd, sample = self.get_sample()
-            data.append(ReSkinData(
-                time=t,
-                acq_delay=acqd,
-                data=np.array(sample)[self._temp_mask],
-                dev_id=self.device_id
-            ))
+            data.append(
+                ReSkinData(
+                    time=t,
+                    acq_delay=acqd,
+                    data=np.array(sample)[self._temp_mask],
+                    dev_id=self.device_id,
+                )
+            )
 
         return data
 
@@ -106,8 +111,8 @@ class ReSkinBase(serial.Serial):
             self.reset_input_buffer()
             while True:
                 # if self.in_waiting >=115:
-                if self.in_waiting >self._msg_length:
-                    if self.read(self._msg_length)[-2:] == b'\r\n':
+                if self.in_waiting > self._msg_length:
+                    if self.read(self._msg_length)[-2:] == b"\r\n":
                         break
                     self.reset_input_buffer()
 
@@ -116,15 +121,16 @@ class ReSkinBase(serial.Serial):
                 collect_start = time.time()
                 if self.burst_mode:
                     zero_bytes = self.read(self._msg_length)
-                    if zero_bytes[-2:] != b'\r\n':
-                        zero_bytes = self.read_until(b'\r\n')
+                    if zero_bytes[-2:] != b"\r\n":
+                        zero_bytes = self.read_until(b"\r\n")
                         continue
                     decoded_zero_bytes = struct.unpack(
-                        '@{}fcc'.format(self._msg_floats), zero_bytes)[:self._msg_floats]
+                        "@{}fcc".format(self._msg_floats), zero_bytes
+                    )[: self._msg_floats]
 
                 else:
                     zero_bytes = self.readline()
-                    decoded_zero_bytes = zero_bytes.decode('utf-8')
+                    decoded_zero_bytes = zero_bytes.decode("utf-8")
                     decoded_zero_bytes = decoded_zero_bytes.strip()
                     decoded_zero_bytes = [float(x) for x in decoded_zero_bytes.split()]
 
@@ -134,6 +140,7 @@ class ReSkinBase(serial.Serial):
             else:
                 # Need checks to timeout if required
                 pass
+
 
 # if __name__ == '__main__':
 #     test = ReSkinBase(5, port="COM32", baudrate=115200)
