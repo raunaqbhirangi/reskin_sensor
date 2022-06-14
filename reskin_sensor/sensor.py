@@ -2,10 +2,11 @@ import collections
 import struct
 import time
 
+import numpy as np
 import serial
 
 ReSkinSettings = collections.namedtuple('ReSkinSettings',
-    'num_mags port baudrate burst_mode device_id')
+    'num_mags port baudrate burst_mode device_id temp_filtered')
 
 ReSkinData = collections.namedtuple('ReSkinData',
     'time, acq_delay, data, dev_id')
@@ -23,7 +24,7 @@ class ReSkinBase(serial.Serial):
         Collects num_samples samples from sensor
     """
     def __init__(self, num_mags:int = 1, port: str = None, baudrate: int = 115200, 
-        burst_mode:bool = True, device_id=-1) -> None:
+        burst_mode:bool = True, device_id=-1, temp_filtered=False) -> None:
         """
         Parameters
         ----------
@@ -48,6 +49,10 @@ class ReSkinBase(serial.Serial):
         
         self._msg_floats = 4*num_mags
         self._msg_length = 4*self._msg_floats + 2
+
+        self._temp_mask = np.ones((self._msg_length,), dtype=bool)
+        if temp_filtered:
+            self._temp_mask[::4] = False
 
         self._initialize()
 
@@ -78,7 +83,7 @@ class ReSkinBase(serial.Serial):
             data.append(ReSkinData(
                 time=t,
                 acq_delay=acqd,
-                data=sample,
+                data=np.array(sample)[self._temp_mask],
                 dev_id=self.device_id
             ))
         

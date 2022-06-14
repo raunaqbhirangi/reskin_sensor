@@ -15,7 +15,8 @@ if __name__ == '__main__':
         port=args.port,
         baudrate=args.baudrate,
         burst_mode=True,
-        device_id=1
+        device_id=1,
+        temp_filtered=False
     )
 
     # Create sensor stream
