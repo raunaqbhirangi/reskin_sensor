@@ -45,11 +45,10 @@ class ReSkinBase(serial.Serial):
         reskin_data_struct: bool = True,
     ) -> None:
         """Initializes a ReSkinBase object."""
-        super(ReSkinBase, self).__init__(port=port, baudrate=baudrate)
 
         self.num_mags = num_mags
-        self.port = port
-        self.baudrate = baudrate
+        self.port_name = port
+        self.baud_rate = baudrate
         self.burst_mode = burst_mode
         self.device_id = device_id
         self.reskin_data_struct = reskin_data_struct
@@ -61,6 +60,7 @@ class ReSkinBase(serial.Serial):
         if temp_filtered:
             self._temp_mask[::4] = False
 
+        super(ReSkinBase, self).__init__(port=port, baudrate=baudrate)
         self._initialize()
 
     def _initialize(self):
@@ -149,3 +149,40 @@ class ReSkinBase(serial.Serial):
             else:
                 # Need checks to timeout if required
                 pass
+
+
+class ReSkinDummy(ReSkinBase):
+    def __init__(
+        self,
+        num_mags: int = 1,
+        port: str = None,
+        baudrate: int = 115200,
+        burst_mode: bool = True,
+        device_id: int = -1,
+        temp_filtered: bool = False,
+        reskin_data_struct: bool = True,
+    ):
+
+        self.num_mags = num_mags
+        self.port_name = port
+        self.baud_rate = baudrate
+        self.burst_mode = burst_mode
+        self.device_id = device_id
+        self.reskin_data_struct = reskin_data_struct
+
+        self._msg_floats = 4 * num_mags
+        self._msg_length = 4 * self._msg_floats + 2
+
+        self._temp_mask = np.ones((self._msg_floats,), dtype=bool)
+        if temp_filtered:
+            self._temp_mask[::4] = False
+
+    def _initialize(self):
+        pass
+
+    def get_sample(self, num_samples=1):
+        collect_start = time.time()
+        data = np.random.uniform(-1., 1., size=(np.sum(self._temp_mask),))
+        acq_delay = time.time() - collect_start
+
+        return collect_start, acq_delay, data
