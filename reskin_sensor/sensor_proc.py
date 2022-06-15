@@ -6,7 +6,7 @@ from multiprocessing import Process, Event, Pipe, Value, Array
 import numpy as np
 import serial
 
-from .sensor import ReSkinBase, ReSkinData
+from .sensor import ReSkinBase, ReSkinData, ReSkinDummy
 
 
 class ReSkinProcess(Process):
@@ -16,7 +16,7 @@ class ReSkinProcess(Process):
     Attributes
     ----------
     num_mags: int
-            Number of magnetometers connected to the sensor
+        Number of magnetometers connected to the sensor
     port : str
         System port that the sensor is connected to
     baudrate: int
@@ -28,6 +28,9 @@ class ReSkinProcess(Process):
     temp_filtered: bool
         Flag indicating if temperature readings should be filtered from
         the output
+    allow_dummy_sensor: bool
+        Flag to instantiate a dummy sensor if a real sensor with the specified
+        configurations is unavailable
     chunk_size : int
         Quantum of data piped from buffer at one time.
 
@@ -56,6 +59,7 @@ class ReSkinProcess(Process):
         device_id: int = -1,
         temp_filtered: bool = False,
         reskin_data_struct: bool = True,
+        allow_dummy_sensor: bool = False,
         chunk_size: int = 10000,
     ):
         """Initializes a ReSkinProcess object."""
@@ -67,6 +71,7 @@ class ReSkinProcess(Process):
         self.device_id = device_id
         self.temp_filtered = temp_filtered
         self.reskin_data_struct = reskin_data_struct
+        self.allow_dummy_sensor = allow_dummy_sensor
 
         self._pipe_in, self._pipe_out = Pipe()
         self._sample_cnt = Value(ct.c_uint64)
@@ -229,10 +234,22 @@ class ReSkinProcess(Process):
             )
             # self.sensor._initialize()
             self.start_streaming()
-        except serial.serialutil.SerialException as e:
-            self._event_quit_request.set()
+        except (serial.serialutil.SerialException, AttributeError) as e:
             print("ERROR: ", e)
-            sys.exit(1)
+            if self.allow_dummy_sensor:
+                print("Using dummy sensor")
+                self.sensor = ReSkinDummy(
+                    num_mags=self.num_mags,
+                    port=self.port,
+                    baudrate=self.baudrate,
+                    burst_mode=self.burst_mode,
+                    device_id=self.device_id,
+                    temp_filtered=self.temp_filtered,
+                    reskin_data_struct=True,
+                )
+                self.start_streaming()
+            else:
+                sys.exit(-1)
 
         is_streaming = False
         while not self._event_quit_request.is_set():

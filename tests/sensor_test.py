@@ -1,5 +1,7 @@
+import serial
+
 import argparse
-from reskin_sensor import ReSkinBase
+from reskin_sensor import ReSkinBase, ReSkinDummy
 
 if __name__ == "__main__":
     # fmt: off
@@ -12,13 +14,24 @@ if __name__ == "__main__":
     # fmt: on
     args = parser.parse_args()
 
-    test_sensor = ReSkinBase(
-        num_mags=args.num_mags,
-        port=args.port,
-        baudrate=args.baudrate,
-        burst_mode=True,
-        device_id=1,
-    )
+    try:
+        test_sensor = ReSkinBase(
+            num_mags=args.num_mags,
+            port=args.port,
+            baudrate=args.baudrate,
+            burst_mode=True,
+            device_id=1,
+        )
+    except serial.serialutil.SerialException as e:
+        print("ERROR: ", e)
+        print("Using dummy sensor")
+        test_sensor = ReSkinDummy(
+            num_mags=args.num_mags,
+            port=args.port,
+            baudrate=args.baudrate,
+            burst_mode=True,
+            device_id=1,
+        )
 
     # Get 5 samples from sensor
     test_samples = test_sensor.get_data(num_samples=5)
