@@ -28,6 +28,9 @@ class ReSkinProcess(Process):
     temp_filtered: bool
         Flag indicating if temperature readings should be filtered from
         the output
+    reskin_data_struct: bool
+        Flag indicating whether the ReSkinData structure should be used for
+        output data
     allow_dummy_sensor: bool
         Flag to instantiate a dummy sensor if a real sensor with the specified
         configurations is unavailable

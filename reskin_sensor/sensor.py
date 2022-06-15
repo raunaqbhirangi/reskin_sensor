@@ -27,6 +27,9 @@ class ReSkinBase(serial.Serial):
     temp_filtered: bool
         Flag indicating if temperature readings should be filtered from
         the output
+    reskin_data_struct: bool
+        Flag indicating whether the ReSkinData structure should be used for
+        output data
 
     Methods
     -------
