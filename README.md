@@ -1,5 +1,7 @@
 # Reskin Sensor Library
-This is a python library to interface with [ReSkin](https://openreview.net/forum?id=87_OJU4sw3V) sensors. We provide two classes for interfacing with [ReSkin](https://openreview.net/forum?id=87_OJU4sw3V). The `ReSkinBase` class is good for standalone data collection: it blocks code execution while data is being collected. The `ReSkinProcess` class can be used for non-blocking background data collection. Data can be buffered in the background while you run the rest of your code.  
+This is a python library to interface with [ReSkin](https://openreview.net/forum?id=87_OJU4sw3V) sensors. We provide two classes for interfacing with [ReSkin](https://openreview.net/forum?id=87_OJU4sw3V). The `ReSkinBase` class is good for standalone data collection: it blocks code execution while data is being collected. The `ReSkinProcess` class can be used for non-blocking background data collection. Data can be buffered in the background while you run the rest of your code.
+
+Latest stable release is v2.0.0
 
 ## Installation
 
@@ -7,7 +9,7 @@ This package can be installed using pip:
 ```
 pip install reskin_sensor
 ```
-Alternatively,
+Alternatively, if you would like the latest (potentially unstable) version, 
 1. Clone this repository using 
 ```
 $ git clone https://github.com/raunaqbhirangi/reskin_sensor.git --recursive
