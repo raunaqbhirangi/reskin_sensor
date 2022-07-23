@@ -1,4 +1,5 @@
 from collections import deque
+import time
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
@@ -26,14 +27,16 @@ def update(frame):
     ln.set_data(xdata, ydata)
     return ln,
 
-def update_data(sensor, fig, ax, xdata, ydata, frame):
+def update_data(sensor, baseline, ln, ydata, i):
     sensor.pause_buffering()
-    buf = sensor.get_buffer()
+    buf = np.array(sensor.get_buffer())
     sensor.start_buffering()
-    times = buf[:,0]
-    data = buf[:,2:-1]
+    # times = buf[:,0]
+    data = buf[:,2:-1] - baseline
     ydata.extend(list(data))
-    ax.plot(ydata)
+    
+    ln.set_array(np.array(ydata).T)
+    return ln,
 
 
 
@@ -45,21 +48,24 @@ if __name__ == '__main__':
     data_mask = np.zeros((11,), dtype=bool)
     data_mask[2:-1] = True
     data_mask[2:-1:4] = False
-    
-    reskin = ReSkinBase(num_mags=2, port='/dev/ttyACM0', temp_filtered=True, reskin_data_struct=False)
-    print(reskin.get_data(10))
-    exit()
+    num_samples = 1000
 
     if streaming:
         reskin = ReSkinProcess(num_mags=2, port='/dev/ttyACM0', temp_filtered=True, reskin_data_struct=False)
         reskin.start()
+        time.sleep(2.)
+        init_data = np.array(reskin.get_data(num_samples))
+        baseline = np.mean(init_data[..., 2:-1], axis=0, keepdims=True)
+
         reskin.start_buffering()
 
         fig, ax = plt.subplots()
-        xdata, ydata = deque(maxlen=1000), deque(maxlen=1000)
-        ln, = plt.plot([], [], 'ro')
+        xdata, ydata = [i for i in range(num_samples)], deque(maxlen=num_samples)
+        ydata.extend(list(init_data[...,2:-1] - baseline))
 
-        ani = FuncAnimation(fig, lambda i: update_data(reskin, fig, ax, xdata, ydata, i), init_func=init, blit=True)
+        ln = ax.pcolormesh(np.array(ydata).T)
+
+        ani = FuncAnimation(fig, lambda i: update_data(reskin, baseline, ln, ydata, i), blit=True)
         plt.show()
 
     else:
