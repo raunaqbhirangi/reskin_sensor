@@ -95,14 +95,14 @@ class ReSkinBase(serial.Serial):
                     ReSkinData(
                         time=t,
                         acq_delay=acqd,
-                        data=np.array(sample)[self._temp_mask],
+                        data=sample,
                         dev_id=self.device_id,
                     )
                 )
             else:
                 data.append(
                     np.concatenate(
-                        ([t], [acqd], np.array(sample)[self._temp_mask], self.device_id)
+                        ([t], [acqd], sample, [self.device_id])
                     )
                 )
 
@@ -147,7 +147,7 @@ class ReSkinBase(serial.Serial):
                     decoded_zero_bytes = [float(x) for x in decoded_zero_bytes.split()]
 
                 acq_delay = time.time() - collect_start
-                return collect_start, acq_delay, decoded_zero_bytes
+                return collect_start, acq_delay, np.array(decoded_zero_bytes)[self._temp_mask]
 
             else:
                 # Need checks to timeout if required

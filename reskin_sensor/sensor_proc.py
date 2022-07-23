@@ -82,7 +82,7 @@ class ReSkinProcess(Process):
 
         self._last_time = Value(ct.c_double)
         self._last_delay = Value(ct.c_double)
-        self._last_reading = Array(ct.c_float, self.num_mags * 4)
+        self._last_reading = Array(ct.c_float, self.num_mags * (4 - temp_filtered))
 
         self._chunk_size = chunk_size
 

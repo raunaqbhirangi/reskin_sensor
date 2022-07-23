@@ -54,7 +54,7 @@ if __name__ == "__main__":
             "Columns: ",
             ", \t".join(
                 [
-                    "T{0}, \tBx{0}, \tBy{0}, \tBz{0}".format(ind)
+                    ((not args.temp_filtered)*"T{0}, \t" + "Bx{0}, \tBy{0}, \tBz{0}").format(ind)
                     for ind in range(args.num_mags)
                 ]
             ),
