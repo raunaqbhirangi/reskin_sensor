@@ -9,7 +9,7 @@ def read(fname):
 
 setup(
     name="reskin_sensor",
-    version="2.0.1",
+    version="2.0.2",
     author="Raunaq Bhirangi",
     author_email="rbhirang@andrew.cmu.edu",
     description="Data acquisition library for a ReSkin sensor",
