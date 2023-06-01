@@ -64,6 +64,7 @@ class ReSkinProcess(Process):
         reskin_data_struct: bool = True,
         allow_dummy_sensor: bool = False,
         chunk_size: int = 10000,
+        clean_spikes: bool = False
     ):
         """Initializes a ReSkinProcess object."""
         super(ReSkinProcess, self).__init__()
@@ -75,6 +76,7 @@ class ReSkinProcess(Process):
         self.temp_filtered = temp_filtered
         self.reskin_data_struct = reskin_data_struct
         self.allow_dummy_sensor = allow_dummy_sensor
+        self.clean_spikes = clean_spikes
 
         self._pipe_in, self._pipe_out = Pipe()
         self._sample_cnt = Value(ct.c_uint64)
@@ -257,16 +259,23 @@ class ReSkinProcess(Process):
         is_streaming = False
         while not self._event_quit_request.is_set():
             if self._event_is_streaming.is_set():
+                
+                if self.clean_spikes and is_streaming:
+                    t, d, sample = self.sensor.get_sample()
+                    sample_diff = self._last_reading - sample
+                    spike_flag = np.abs(sample_diff) > 4000.
+                    correction = sample_diff * spike_flag
+                    self._last_time.value, self._last_delay.value, self._last_reading[:] = t, d, sample + correction
+                else:    
+                    (
+                        self._last_time.value,
+                        self._last_delay.value,
+                        self._last_reading[:],
+                    ) = self.sensor.get_sample()
                 if not is_streaming:
                     is_streaming = True
                     # Any logging or stuff you want to do when streaming has
                     # just started should go here
-                (
-                    self._last_time.value,
-                    self._last_delay.value,
-                    self._last_reading[:],
-                ) = self.sensor.get_sample()
-
                 self._sample_cnt.value += 1
 
                 if self._event_is_buffering.is_set():
